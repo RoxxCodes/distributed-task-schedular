@@ -1,5 +1,7 @@
 package com.scheduler.model.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.scheduler.config.FlexibleInstantDeserializer;
 import com.scheduler.model.enums.TaskType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -28,6 +30,7 @@ public class CreateTaskRequest {
     private String cronExpression;
 
     /** Required for ONE_TIME tasks */
+    @JsonDeserialize(using = FlexibleInstantDeserializer.class)
     private Instant executeAt;
 
     private Integer maxRetries;
