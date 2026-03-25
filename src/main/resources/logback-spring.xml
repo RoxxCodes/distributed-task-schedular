@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name"
+                    defaultValue="distributed-task-scheduler"/>
+
+    <!-- ==================== CONSOLE APPENDER ==================== -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ==================== FILE APPENDER (rolling) ==================== -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/${APP_NAME}.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{60} - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/${APP_NAME}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- ==================== TASK AUDIT APPENDER ==================== -->
+    <!-- Dedicated log file for task lifecycle events (create/execute/complete/fail) -->
+    <appender name="TASK_AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/task-audit.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/task-audit.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>60</maxHistory>
+            <totalSizeCap>5GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- ==================== LOGGER CONFIGURATION ==================== -->
+
+    <!-- Application loggers -->
+    <logger name="com.scheduler" level="INFO"/>
+    <logger name="com.scheduler.scheduler" level="INFO"/>
+    <logger name="com.scheduler.worker" level="INFO"/>
+    <logger name="com.scheduler.service" level="INFO"/>
+
+    <!-- Task audit trail: TaskService + TaskWorker + TaskExecutionService -->
+    <logger name="com.scheduler.service.TaskService" level="INFO" additivity="true">
+        <appender-ref ref="TASK_AUDIT"/>
+    </logger>
+    <logger name="com.scheduler.service.TaskExecutionService" level="INFO" additivity="true">
+        <appender-ref ref="TASK_AUDIT"/>
+    </logger>
+    <logger name="com.scheduler.worker.TaskWorker" level="INFO" additivity="true">
+        <appender-ref ref="TASK_AUDIT"/>
+    </logger>
+
+    <!-- Framework loggers — keep quiet unless debugging -->
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.springframework.boot.autoconfigure" level="WARN"/>
+    <logger name="org.springframework.kafka" level="WARN"/>
+    <logger name="org.apache.kafka" level="WARN"/>
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="org.hibernate.SQL" level="WARN"/>
+    <logger name="org.flywaydb" level="INFO"/>
+    <logger name="io.lettuce" level="WARN"/>
+
+    <!-- ==================== PROFILES ==================== -->
+
+    <springProfile name="default | dev">
+        <logger name="com.scheduler" level="DEBUG"/>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+</configuration>

@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: distributed-task-scheduler
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/task_scheduler
+    username: postgres
+    password: postgres
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 5000
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+    consumer:
+      group-id: task-scheduler-workers
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+    listener:
+      concurrency: ${scheduler.worker-thread-count:10}
+      ack-mode: manual
+
+server:
+  port: 8080
+
+scheduler:
+  bucket-size-seconds: 60
+  poll-interval-ms: 5000
+  worker-thread-count: 10
+  recurring-promote-interval-ms: 60000
+  promote-horizon-seconds: 120
